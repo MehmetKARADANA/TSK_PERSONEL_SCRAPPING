@@ -13,7 +13,7 @@ from firebase_admin import credentials, firestore
 sys.stdout.reconfigure(encoding='utf-8')
 
 # Firebase kimlik bilgilerini yükle
-cred = credentials.Certificate('C:\Users\Mehmet\Desktop\codes\Python\web_Scrapping\google-services.json')
+cred = credentials.Certificate('C:\\Users\\Mehmet\\Desktop\\codes\\Python\\web_Scrapping\\tskpersonelteminapp-firebase-adminsdk-fbsvc-52be0ac8e1.json')
 firebase_admin.initialize_app(cred)
 
 # Firestore bağlantısı
