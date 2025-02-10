@@ -89,16 +89,41 @@ def get_detail_content(detail_url):
 def check_duplicate(collection, title, url):
     """Firestore'da aynı başlık veya URL ile kayıt var mı kontrol et"""
     # Başlığa göre kontrol
-    title_doc = collection.where('title', '==', title).limit(1).get()
-    if len(title_doc) > 0:
-        return title_doc[0].to_dict()
+    title_docs = collection.where('title', '==', title).limit(1).get()
+    if len(title_docs) > 0:
+        doc = title_docs[0]
+        # Varolan kaydı active yap
+        doc.reference.update({"state": "active", "updated_at": datetime.now()})
+        return doc.to_dict()
     
     # URL'ye göre kontrol
-    url_doc = collection.where('detail_url', '==', url).limit(1).get()
-    if len(url_doc) > 0:
-        return url_doc[0].to_dict()
+    url_docs = collection.where('detail_url', '==', url).limit(1).get()
+    if len(url_docs) > 0:
+        doc = url_docs[0]
+        # Varolan kaydı active yap
+        doc.reference.update({"state": "active", "updated_at": datetime.now()})
+        return doc.to_dict()
     
     return None
+
+def update_states(collection, current_items):
+    """Veritabanındaki kayıtların durumlarını güncelle"""
+    # Web sitesinden gelen URL'leri topla
+    current_urls = set(item['detail_url'] for item in current_items)
+    
+    # Veritabanındaki active kayıtları al
+    active_docs = collection.where('state', '==', 'active').get()
+    
+    # Her active kaydı kontrol et
+    for doc in active_docs:
+        doc_data = doc.to_dict()
+        # Eğer URL artık web sitesinde yoksa inactive yap
+        if doc_data['detail_url'] not in current_urls:
+            doc.reference.update({
+                "state": "inactive",
+                "updated_at": datetime.now()
+            })
+            print(f"Inactive yapıldı: {doc_data['title']}")
 
 # Ana istek için de session kullan
 try:
@@ -131,12 +156,10 @@ try:
                     
                     if not existing_temin:
                         print(f"Yeni temin bulundu: {title}")
-                        detail_content = get_detail_content(full_detail_url) if full_detail_url else None
                         temin_doc = {
                             "title": title,
                             "date": date,
                             "detail_url": full_detail_url,
-                            "detail_content": detail_content,
                             "state": "active",
                             "created_at": datetime.now(),
                             "updated_at": datetime.now()
@@ -168,12 +191,10 @@ try:
                     
                     if not existing_duyuru:
                         print(f"Yeni duyuru bulundu: {title}")
-                        detail_content = get_detail_content(full_detail_url) if full_detail_url else None
                         duyuru_doc = {
                             "title": title,
                             "date": date,
                             "detail_url": full_detail_url,
-                            "detail_content": detail_content,
                             "state": "active",
                             "created_at": datetime.now(),
                             "updated_at": datetime.now()
@@ -189,9 +210,37 @@ try:
                 except AttributeError:
                     continue
         
+        # Tüm veriler toplandıktan sonra durumları güncelle
+        update_states(temin_collection, teminler)
+        update_states(duyuru_collection, duyurular)
+        
         # Sonuçları yazdır
         if teminler or duyurular:
             print("\n=== Firestore'a Kaydedilen Veriler ===\n")
+            
+            # Inactive teminleri göster
+            inactive_temins = temin_collection.where('state', '==', 'inactive').get()
+            if inactive_temins:
+                print(f"\nInactive Teminler ({len(inactive_temins)} adet):")
+                for doc in inactive_temins:
+                    temin = doc.to_dict()
+                    print(f"\nBaşlık: {temin['title']}")
+                    print(f"Tarih: {temin['date']}")
+                    print(f"Durum: {temin['state']}")
+                    print(f"URL: {temin['detail_url']}")
+                    print("-" * 50)
+            
+            # Inactive duyuruları göster
+            inactive_duyurus = duyuru_collection.where('state', '==', 'inactive').get()
+            if inactive_duyurus:
+                print(f"\nInactive Duyurular ({len(inactive_duyurus)} adet):")
+                for doc in inactive_duyurus:
+                    duyuru = doc.to_dict()
+                    print(f"\nBaşlık: {duyuru['title']}")
+                    print(f"Tarih: {duyuru['date']}")
+                    print(f"Durum: {duyuru['state']}")
+                    print(f"URL: {duyuru['detail_url']}")
+                    print("-" * 50)
             
             if teminler:
                 print(f"\nTeminler ({len(teminler)} adet):")
