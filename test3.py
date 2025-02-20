@@ -164,8 +164,10 @@ try:
                             "created_at": datetime.now(),
                             "updated_at": datetime.now()
                         }
-                        # Firestore'a ekle
-                        temin_collection.add(temin_doc)
+                        # Döküman ID'si olarak detail_url'den hash oluştur
+                        doc_id = str(hash(full_detail_url))
+                        # Firestore'a belirli ID ile ekle
+                        temin_collection.document(doc_id).set(temin_doc)
                         teminler.append(temin_doc)
                         print(f"Yeni temin eklendi: {title}")
                     else:
@@ -199,8 +201,10 @@ try:
                             "created_at": datetime.now(),
                             "updated_at": datetime.now()
                         }
-                        # Firestore'a ekle
-                        duyuru_collection.add(duyuru_doc)
+                        # Döküman ID'si olarak detail_url'den hash oluştur
+                        doc_id = str(hash(full_detail_url))
+                        # Firestore'a belirli ID ile ekle
+                        duyuru_collection.document(doc_id).set(duyuru_doc)
                         duyurular.append(duyuru_doc)
                         print(f"Yeni duyuru eklendi: {title}")
                     else:
@@ -218,27 +222,30 @@ try:
         if teminler or duyurular:
             print("\n=== Firestore'a Kaydedilen Veriler ===\n")
             
-            # Inactive teminleri göster
-            inactive_temins = temin_collection.where('state', '==', 'inactive').get()
-            if inactive_temins:
-                print(f"\nInactive Teminler ({len(inactive_temins)} adet):")
-                for doc in inactive_temins:
+            # Aktif temin ve duyuru sayılarını göster
+            active_temins = temin_collection.where('state', '==', 'active').get()
+            active_duyurus = duyuru_collection.where('state', '==', 'active').get()
+            print(f"Aktif Temin Sayısı: {len(active_temins)}")
+            print(f"Aktif Duyuru Sayısı: {len(active_duyurus)}")
+            print("-" * 50)
+            
+            # Aktif teminleri göster
+            if active_temins:
+                print(f"\nAktif Teminler ({len(active_temins)} adet):")
+                for doc in active_temins:
                     temin = doc.to_dict()
                     print(f"\nBaşlık: {temin['title']}")
                     print(f"Tarih: {temin['date']}")
-                    print(f"Durum: {temin['state']}")
                     print(f"URL: {temin['detail_url']}")
                     print("-" * 50)
             
-            # Inactive duyuruları göster
-            inactive_duyurus = duyuru_collection.where('state', '==', 'inactive').get()
-            if inactive_duyurus:
-                print(f"\nInactive Duyurular ({len(inactive_duyurus)} adet):")
-                for doc in inactive_duyurus:
+            # Aktif duyuruları göster
+            if active_duyurus:
+                print(f"\nAktif Duyurular ({len(active_duyurus)} adet):")
+                for doc in active_duyurus:
                     duyuru = doc.to_dict()
                     print(f"\nBaşlık: {duyuru['title']}")
                     print(f"Tarih: {duyuru['date']}")
-                    print(f"Durum: {duyuru['state']}")
                     print(f"URL: {duyuru['detail_url']}")
                     print("-" * 50)
             
@@ -261,11 +268,14 @@ try:
                     print("-" * 50)
             
             # Firestore'daki kayıt sayılarını kontrol et
-            temin_count = len(temin_collection.get())
-            duyuru_count = len(duyuru_collection.get())
-            print(f"\nFirestore'daki toplam kayıt sayıları:")
-            print(f"Teminler: {temin_count}")
-            print(f"Duyurular: {duyuru_count}")
+            active_temins = temin_collection.where('state', '==', 'active').get()
+            active_duyurus = duyuru_collection.where('state', '==', 'active').get()
+            total_temins = len(temin_collection.get())
+            total_duyurus = len(duyuru_collection.get())
+            
+            print(f"\nFirestore'daki kayıt sayıları:")
+            print(f"Toplam Temin: {total_temins} (Aktif: {len(active_temins)})")
+            print(f"Toplam Duyuru: {total_duyurus} (Aktif: {len(active_duyurus)})")
         else:
             print("Hiç veri bulunamadı!")
     else:
