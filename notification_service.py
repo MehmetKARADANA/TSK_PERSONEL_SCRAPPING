@@ -8,18 +8,19 @@ from datetime import datetime
 import firebase_admin
 from firebase_admin import credentials, firestore
 import time
+import os
 
 # Konsol çıktısı için UTF-8 encoding ayarla
 sys.stdout.reconfigure(encoding='utf-8')
 
-# Firebase kimlik bilgilerini yükle
-cred = credentials.Certificate('C:\\Users\\Mehmet\\Desktop\\codes\\Python\\web_Scrapping\\tskpersonelteminapp-firebase-adminsdk-fbsvc-52be0ac8e1.json')
+# Göreceli yol kullanımı
+cred = credentials.Certificate('./tskpersonelteminapp-firebase-adminsdk-fbsvc-52be0ac8e1.json')
 firebase_admin.initialize_app(cred)
 
 # Firestore bağlantısı
 db = firestore.client()
 duyuru_collection = db.collection('duyurular')
-temin_collection = db.collection('teminer')
+temin_collection = db.collection('teminler')
 
 # Gönderilen bildirimleri takip etmek için set
 sent_notifications = set()
@@ -38,7 +39,7 @@ def send_notification(title, doc_id, type="duyuru"):
     
     try:
         response = requests.post(
-            'http://localhost:8080/api/fcm/broadcast',
+            'https://tsk-app-notification-service-801eb04a4e04.herokuapp.com/api/fcm/broadcast',
             json=notification_data,
             headers={'Content-Type': 'application/json'}
         )
@@ -77,8 +78,8 @@ def on_temin_snapshot(doc_snapshot, changes, read_time):
                 send_notification(temin_data.get('title', 'Yeni Temin'), change.document.id, "temin")
 
 # Başlangıçta mevcut teminleri kaydet
-existing_teminer = temin_collection.get()
-for doc in existing_teminer:
+existing_teminler = temin_collection.get()
+for doc in existing_teminler:
     sent_notifications.add(doc.id)
 
 # Duyuru ve temin koleksiyonlarını dinle
