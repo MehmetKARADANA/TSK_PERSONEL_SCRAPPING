@@ -3,6 +3,7 @@ import sys
 import time
 from datetime import datetime
 import logging
+import os
 
 # Logging seviyesini ayarla
 logging.basicConfig(level=logging.ERROR)
@@ -17,9 +18,18 @@ def run_services():
         print("Scraping service başlatıldı.")
         
         # Her iki process'i de bekle
-        notification_process.wait()
-        scraping_process.wait()
-        
+        while True:
+            # Process'lerin çalışır durumda olduğunu kontrol et
+            if notification_process.poll() is not None:
+                print("Notification service durdu, yeniden başlatılıyor...")
+                notification_process = subprocess.Popen([sys.executable, 'notification_service.py'])
+            
+            if scraping_process.poll() is not None:
+                print("Scraping service durdu, yeniden başlatılıyor...")
+                scraping_process = subprocess.Popen([sys.executable, 'scrapping.py'])
+            
+            time.sleep(5)  # 5 saniye bekle
+            
     except KeyboardInterrupt:
         print("\nProgramlar durduruluyor...")
         notification_process.terminate()
@@ -29,4 +39,11 @@ def run_services():
         print(f"Hata oluştu: {e}")
 
 if __name__ == "__main__":
-    run_services() 
+    # Heroku'da worker'ı aktif tut
+    try:
+        run_services()
+    except Exception as e:
+        print(f"Ana program hatası: {e}")
+        # Hata durumunda yeniden başlat
+        time.sleep(10)
+        os.execv(sys.executable, [sys.executable] + sys.argv) 
