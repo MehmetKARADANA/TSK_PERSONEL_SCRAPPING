@@ -12,12 +12,11 @@ from firebase_admin import credentials, firestore
 # Konsol çıktısı için UTF-8 encoding ayarla
 sys.stdout.reconfigure(encoding='utf-8')
 
-# Firebase kimlik bilgilerini yükle
-#cred = credentials.Certificate('C:\\Users\\Mehmet\\Desktop\\codes\\Python\\web_Scrapping\\tskpersonelteminapp-firebase-adminsdk-fbsvc-52be0ac8e1.json')
+# Firebase'i başlat
 cred = credentials.Certificate('./tskpersonelteminapp-firebase-adminsdk-fbsvc-52be0ac8e1.json')
 firebase_admin.initialize_app(cred)
 
-# Firestore bağlantısı
+# Sonra Firestore client'ı oluştur
 db = firestore.client()
 temin_collection = db.collection('teminler')
 duyuru_collection = db.collection('duyurular')
@@ -93,7 +92,6 @@ def check_duplicate(collection, title, url):
     title_docs = collection.where('title', '==', title).limit(1).get()
     if len(title_docs) > 0:
         doc = title_docs[0]
-        # Varolan kaydı active yap
         doc.reference.update({"state": "active", "updated_at": datetime.now()})
         return doc.to_dict()
     
@@ -101,7 +99,6 @@ def check_duplicate(collection, title, url):
     url_docs = collection.where('detail_url', '==', url).limit(1).get()
     if len(url_docs) > 0:
         doc = url_docs[0]
-        # Varolan kaydı active yap
         doc.reference.update({"state": "active", "updated_at": datetime.now()})
         return doc.to_dict()
     
@@ -109,16 +106,11 @@ def check_duplicate(collection, title, url):
 
 def update_states(collection, current_items):
     """Veritabanındaki kayıtların durumlarını güncelle"""
-    # Web sitesinden gelen URL'leri topla
     current_urls = set(item['detail_url'] for item in current_items)
-    
-    # Veritabanındaki active kayıtları al
     active_docs = collection.where('state', '==', 'active').get()
     
-    # Her active kaydı kontrol et
     for doc in active_docs:
         doc_data = doc.to_dict()
-        # Eğer URL artık web sitesinde yoksa inactive yap
         if doc_data['detail_url'] not in current_urls:
             doc.reference.update({
                 "state": "inactive",
@@ -285,8 +277,6 @@ def scrape_data():
     except requests.exceptions.RequestException as e:
         print(f"Bağlantı hatası: {e}")
 
-# Ana try-except bloğunu scrape_data() fonksiyonunun içine taşı
-# ve sadece bu kısmı dışarıda bırak:
 if __name__ == "__main__":
     try:
         while True:
@@ -295,4 +285,6 @@ if __name__ == "__main__":
             print(f"\n=== 15 dakika bekleniyor... ===")
             time.sleep(900)  # 15 dakika = 900 saniye
     except KeyboardInterrupt:
-        print("\nProgram kullanıcı tarafından durduruldu.")
+        # Firebase bağlantısını kapat
+        firebase_admin.delete_app(firebase_admin.get_app())
+        print("Program durduruldu.")

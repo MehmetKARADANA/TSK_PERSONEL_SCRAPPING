@@ -13,11 +13,11 @@ import os
 # Konsol çıktısı için UTF-8 encoding ayarla
 sys.stdout.reconfigure(encoding='utf-8')
 
-# Göreceli yol kullanımı
+# Firebase'i başlat
 cred = credentials.Certificate('./tskpersonelteminapp-firebase-adminsdk-fbsvc-52be0ac8e1.json')
 firebase_admin.initialize_app(cred)
 
-# Firestore bağlantısı
+# Sonra Firestore client'ı oluştur
 db = firestore.client()
 duyuru_collection = db.collection('duyurular')
 temin_collection = db.collection('teminler')
@@ -86,16 +86,11 @@ for doc in existing_teminler:
 duyuru_watch = duyuru_collection.on_snapshot(on_duyuru_snapshot)
 temin_watch = temin_collection.on_snapshot(on_temin_snapshot)
 
-def run_notification_service():
-    try:
-        print("Notification service başlatıldı. Yeni duyurular ve teminler bekleniyor...")
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        print("Servis durduruldu.")
-
-# Scriptin çalışır durumda kalması için
+# En sonda
 try:
-    run_notification_service()
+    while True:
+        time.sleep(1)
 except KeyboardInterrupt:
+    # Firebase bağlantısını kapat
+    firebase_admin.delete_app(firebase_admin.get_app())
     print("Servis durduruldu.") 
