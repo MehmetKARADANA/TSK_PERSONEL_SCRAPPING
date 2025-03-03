@@ -32,7 +32,7 @@ def send_notification(title, doc_id, type="duyuru"):
         return
     
     notification_data = {
-        "to": "",  # FCM topic veya token
+        "to": "",  # Boş string olarak değiştirdik
         "title": f"Yeni {type.capitalize()}",
         "body": title
     }
@@ -46,10 +46,11 @@ def send_notification(title, doc_id, type="duyuru"):
         
         if response.status_code == 200:
             print(f"Bildirim başarıyla gönderildi: {title}")
-            # Başarılı bildirimi kaydet
+            print(f"Yanıt: {response.text}")
             sent_notifications.add(doc_id)
         else:
             print(f"Bildirim gönderilemedi. Hata kodu: {response.status_code}")
+            print(f"Yanıt: {response.text}")
             
     except Exception as e:
         print(f"Bildirim gönderirken hata oluştu: {e}")
