@@ -283,7 +283,7 @@ if __name__ == "__main__":
             print(f"\n=== Kontrol başlatılıyor... ({datetime.now().strftime('%H:%M:%S')}) ===")
             scrape_data()
             print(f"\n=== 15 dakika bekleniyor... ===")
-            time.sleep(90)  # 15 dakika = 900 saniye
+            time.sleep(900)  # 15 dakika = 900 saniye
     except KeyboardInterrupt:
         # Firebase bağlantısını kapat
         firebase_admin.delete_app(firebase_admin.get_app())
