@@ -8,6 +8,8 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import time
 
+#Bu kodalr vps sunucularında çalışıyor ve logları txt dosyalarında tutuluyor.
+
 # Konsol çıktısı için UTF-8 encoding ayarla
 sys.stdout.reconfigure(encoding='utf-8')
 
@@ -34,8 +36,8 @@ def send_notification(title, doc_id, notification_type="duyuru"):
     print("send_notification")
     notification_data = {
         "to": "",
-        "title": title,
-        "body": f"Yeni {notification_type} yayınlandı!",
+        "title": f"Yeni {notification_type} yayınlandı!",
+        "body": title,
         "doc_id": doc_id
     }
 
