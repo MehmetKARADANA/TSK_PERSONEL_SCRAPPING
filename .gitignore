@@ -3,6 +3,6 @@ __pycache__/
 .env
 
 # Firebase/Google credentials
-*-firebase-adminsdk-*.json
+google-services.json
 tskpersonelteminapp-*.json
 *.json 
